@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MacroAir Certified Installer Application</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════
+   1. TOKENS (mirrors credit-application.html)
+═══════════════════════════════════════════════ */
+:root {
+  --bg:#1c2535; --bg-2:#222d40;
+  --card:#283246; --card-solid:#283246;
+  --surface-2:rgba(255,255,255,0.04); --surface-3:rgba(255,255,255,0.08); --surface-hover:rgba(255,255,255,0.06);
+  --text:#f4f6fa; --text-2:#cdd5e0; --text-muted:#8794a8;
+  --border:rgba(255,255,255,0.08); --border-strong:rgba(255,255,255,0.16); --border-accent:rgba(0,164,228,0.35);
+  --accent:#00a4e4; --accent-2:#0090c8; --accent-dim:rgba(0,164,228,0.14); --accent-glow:rgba(0,164,228,0.18);
+  --success:#0fba8e; --danger:#e05454; --warning:#e6b040;
+  --shadow-lg:0 12px 32px rgba(0,0,0,0.32); --shadow-md:0 6px 16px rgba(0,0,0,0.22); --shadow-sm:0 2px 6px rgba(0,0,0,0.16);
+  --radius-xl:14px; --radius-lg:12px; --radius-md:10px; --radius-sm:6px;
+  --section-gap:28px; --label-gap:8px; --card-pad:22px; --input-h:40px;
+  --font:'DM Sans',ui-sans-serif,system-ui,sans-serif; --mono:'DM Mono',monospace;
+}
+html.light {
+  --bg:#f5f7fa; --bg-2:#eef2f7;
+  --card:#ffffff; --card-solid:#fff;
+  --surface-2:rgba(15,23,42,0.04); --surface-3:rgba(15,23,42,0.07); --surface-hover:rgba(15,23,42,0.05);
+  --text:#0d1420; --text-2:#2c3e55; --text-muted:#5c7080;
+  --border:rgba(15,23,42,0.09); --border-strong:rgba(15,23,42,0.16); --border-accent:rgba(0,130,200,0.25);
+  --accent:#0081c7; --accent-2:#006bad; --accent-dim:rgba(0,130,200,0.10); --accent-glow:rgba(0,130,200,0.14);
+  --shadow-lg:0 8px 28px rgba(15,23,42,0.07); --shadow-md:0 4px 12px rgba(15,23,42,0.05); --shadow-sm:0 1px 3px rgba(15,23,42,0.04);
+}
+
+/* ═══════════════════════════════════════════════
+   2. RESET / GLOBAL
+═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;transition:background .25s,color .25s}
+input,select,textarea,button{font-family:var(--font)}
+a{color:var(--accent)}
+
+.app-shell{position:relative;z-index:1;width:100%;margin:0;padding:24px 64px 80px}
+@media(max-width:900px){.app-shell{padding:18px 32px 60px}}
+@media(max-width:600px){.app-shell{padding:14px 18px 50px}}
+
+/* Floating theme toggle, top-right of the entire form */
+#theme-toggle{
+  position:absolute;top:14px;right:64px;z-index:210;
+  display:inline-flex;align-items:center;gap:6px;
+  height:30px;padding:0 12px;border-radius:999px;
+  background:var(--card);border:1px solid var(--border-strong);
+  color:var(--text-2);font-size:11.5px;font-weight:600;letter-spacing:.04em;
+  cursor:pointer;font-family:var(--font);transition:all .15s;text-transform:uppercase;
+  box-shadow:var(--shadow-sm);
+}
+#theme-toggle:hover{background:var(--surface-3);color:var(--text);border-color:var(--accent)}
+#theme-toggle .ti{display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1}
+@media(max-width:900px){#theme-toggle{right:32px}}
+@media(max-width:600px){#theme-toggle{right:18px;padding:0 10px}#theme-toggle .tlabel{display:none}}
+
+/* ═══════════════════════════════════════════════
+   3. TWO-COLUMN LAYOUT — form left, sticky summary right
+═══════════════════════════════════════════════ */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:start;margin-top:24px}
+@media(max-width:1100px){.layout{grid-template-columns:1fr;gap:0}}
+.form-col{min-width:0}
+
+.summary-col{position:sticky;top:24px;align-self:start;display:flex;flex-direction:column}
+.summary-col .section-label{margin-top:0}
+@media(max-width:1100px){
+  .summary-col{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:150;background:var(--card);border-top:1px solid var(--border-strong);box-shadow:0 -8px 24px rgba(0,0,0,0.18);padding:0;margin:0}
+  .form-col{padding-bottom:130px}
+}
+
+.summary-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow-md);
+}
+@media(max-width:1100px){.summary-card{border-radius:0;border:none;padding:14px 18px;box-shadow:none}}
+
+.progress-wrap{margin-bottom:16px}
+.progress-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.progress-row b{color:var(--text);font-size:13px;font-weight:700;letter-spacing:0;text-transform:none}
+.progress-bar{height:6px;background:var(--surface-3);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#3ec1ee);width:0%;transition:width .3s ease}
+
+.sec-list{display:flex;flex-direction:column;gap:2px;margin:0 -6px 14px}
+@media(max-width:1100px){.sec-list{display:none}}
+.sec-link{
+  display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--radius-sm);
+  background:transparent;border:none;cursor:pointer;text-align:left;
+  color:var(--text-2);font-size:12.5px;font-weight:500;font-family:var(--font);
+  transition:all .12s;
+}
+.sec-link:hover{background:var(--surface-2);color:var(--text)}
+.sec-link.active{background:var(--accent-dim);color:var(--accent)}
+.sec-link .dot{
+  width:14px;height:14px;border-radius:50%;flex-shrink:0;
+  background:var(--surface-3);border:1.5px solid var(--border-strong);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:9px;color:transparent;font-weight:700;
+}
+.sec-link.complete .dot{background:var(--success);border-color:var(--success);color:#fff}
+.sec-link.complete .dot::before{content:'✓'}
+.sec-link.has-required .dot{border-color:#ef6b6b}
+
+.sum-meta{margin:0 0 14px;padding:12px 14px;background:var(--surface-2);border-radius:var(--radius-md);font-size:12px;color:var(--text-muted)}
+.sum-meta-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+.sum-meta-row b{color:var(--text);font-weight:600;font-size:12.5px;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.sum-submit{width:100%}
+
+@media(max-width:1100px){
+  .progress-wrap{margin-bottom:8px}
+  .sum-meta{display:none}
+  .summary-col .section-label{display:none}
+  .summary-card .sum-submit{margin-top:6px}
+}
+
+/* ═══════════════════════════════════════════════
+   4. SECTION LABEL + GLASS CARD
+═══════════════════════════════════════════════ */
+.section-label{font-size:19px;font-weight:700;color:var(--text);margin:var(--section-gap) 0 var(--label-gap);letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.section-label::before{content:'';display:block;width:3px;height:18px;background:var(--accent);border-radius:2px;flex-shrink:0}
+.section-sub{font-size:13px;color:var(--text-muted);margin:0 0 18px 13px}
+
+.form-section{scroll-margin-top:20px}
+.glass-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--card-pad);box-shadow:var(--shadow-md)}
+.glass-card + .glass-card{margin-top:18px}
+
+/* ═══════════════════════════════════════════════
+   5. INTRO HERO — theme-locked charcoal/accent
+═══════════════════════════════════════════════ */
+.hero{
+  margin-top:32px;padding:30px 32px 28px;
+  border-radius:var(--radius-xl);
+  background:linear-gradient(135deg,rgba(0,164,228,0.14),transparent 60%),#283246;
+  border:1px solid rgba(0,164,228,0.35);
+  box-shadow:0 12px 32px rgba(0,0,0,0.32);
+  position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;right:-80px;top:-80px;
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(0,164,228,0.18),transparent 70%);
+  pointer-events:none;
+}
+.hero .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#4fb2ee;margin-bottom:8px;position:relative;z-index:1}
+.hero h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px;color:#f4f6fa;position:relative;z-index:1}
+.hero p{color:#cdd5e0;font-size:14px;max-width:820px;line-height:1.55;position:relative;z-index:1}
+.hero .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;font-size:12px;position:relative;z-index:1}
+.hero .meta span{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:999px;
+  background:rgba(15,186,142,0.14);
+  border:1px solid rgba(15,186,142,0.4);
+  color:#5fe6b8;font-weight:500;letter-spacing:.01em;
+}
+.hero .meta b{color:#a6f5d2;font-weight:700}
+.hero .meta a{color:#a6f5d2;text-decoration:none}
+
+.info-note{margin:18px 0 4px;padding:14px 16px;background:var(--accent-dim);border:1px solid var(--border-accent);border-radius:var(--radius-md);font-size:12.5px;line-height:1.6;color:var(--text-2)}
+.info-note b{color:var(--text)}
+
+/* ═══════════════════════════════════════════════
+   6. QUESTIONS + FORMS
+═══════════════════════════════════════════════ */
+.q{margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.q:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.q-label{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.45;margin-bottom:6px}
+.q-label .req{color:#ef6b6b;font-weight:700;margin-left:1px}
+html.light .q-label .req{color:#dc4b4b}
+.q-hint{font-size:12.5px;color:var(--text-muted);line-height:1.55;margin:0 0 10px}
+.q-hint b{color:var(--text-2)}
+.q-hint a{color:var(--accent)}
+.field-note{font-size:11.5px;color:var(--text-muted);margin:0 0 5px}
+
+.key-flag{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-dim);border:1px solid var(--border-accent);
+  padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;white-space:nowrap;
+}
+
+.field-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.field-row:last-child{margin-bottom:0}
+.field-row > div{flex:1 1 200px;min-width:0}
+
+.form-input,.form-select,.form-textarea{
+  height:var(--input-h);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius-md);color:var(--text);font-size:13.5px;font-family:var(--font);
+  padding:0 14px;transition:border-color .15s,background .15s;width:100%;outline:none;appearance:none;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);background:var(--accent-dim)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text-muted)}
+.form-textarea{height:auto;min-height:88px;padding:12px 14px;resize:vertical;line-height:1.5}
+.form-select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8fa8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;
+}
+.form-select option{background:var(--card-solid);color:var(--text)}
+.form-input.invalid,.form-select.invalid,.form-textarea.invalid{
+  border-color:var(--danger);background:rgba(224,84,84,0.10);border-width:1.5px;
+}
+
+@keyframes flashPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(224,84,84,0.55); }
+  60%  { box-shadow: 0 0 0 10px rgba(224,84,84,0); }
+  100% { box-shadow: 0 0 0 0 rgba(224,84,84,0); }
+}
+.flash.invalid,
+.flash.form-input.invalid, .flash.form-select.invalid, .flash.form-textarea.invalid,
+.flash.yesno.invalid, .flash.mc-options.invalid, .flash.checkbox-row.invalid {
+  animation: flashPulse 0.9s ease-out 0s 3;
+}
+
+/* iOS Safari zooms inputs < 16px on focus */
+@media(max-width:900px){
+  .form-input, .form-select, .form-textarea{font-size:16px}
+}
+
+/* Bright submit-error banner */
+.submit-error-banner{
+  position:sticky; top:0; z-index:150;
+  margin:0 0 18px;padding:14px 18px;
+  background:linear-gradient(90deg, rgba(224,84,84,0.18), rgba(224,84,84,0.06));
+  border:1px solid var(--danger);border-left:4px solid var(--danger);border-radius:var(--radius-md);
+  color:var(--text);font-size:13.5px;font-weight:600;
+  display:none;align-items:center;gap:10px;
+  box-shadow:0 4px 16px rgba(224,84,84,0.18);
+  animation:flashPulse 0.9s ease-out 0s 2;
+}
+.submit-error-banner.show{display:flex}
+.submit-error-banner .icon{
+  flex-shrink:0;width:28px;height:28px;border-radius:50%;
+  background:var(--danger);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;
+}
+.submit-error-banner .count{color:var(--danger);font-weight:700}
+.submit-error-banner .scroll-btn{
+  margin-left:auto;padding:6px 12px;border-radius:var(--radius-sm);
+  background:var(--danger);color:#fff;border:none;font-weight:600;font-size:12px;cursor:pointer;font-family:var(--font);
+}
+.submit-error-banner .scroll-btn:hover{filter:brightness(1.08)}
+
+/* yes / no (native radios, styled like credit-app yn buttons) */
+.yesno{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.yesno label{
+  flex:1 1 130px;min-width:130px;min-height:var(--input-h);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:1.5px solid var(--border);background:var(--surface-2);color:var(--text-muted);
+  border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .15s;padding:8px 12px;text-align:center;position:relative;
+}
+.yesno label:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-strong)}
+.yesno input{position:absolute;opacity:0;width:0;height:0}
+.yesno label:has(input:checked){border-color:var(--accent);color:var(--text)}
+.yesno label:has(input[value="Yes"]:checked){background:rgba(15,186,142,.18);border-color:var(--success);color:var(--success)}
+.yesno label:has(input[value="Yes"]:checked)::before{content:'✓';font-weight:700}
+.yesno label:has(input[value="No"]:checked){background:var(--text);border-color:var(--text);color:var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.yesno label:has(input[value="No"]:checked)::before{content:'✕';font-weight:700}
+.yesno label:has(input[value="N/A"]:checked){background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.yesno.invalid label{border-color:var(--danger)}
+
+/* multiple choice (A/B/C/D) */
+.mc-options{display:flex;flex-direction:column;gap:8px;margin-top:2px}
+.mc-options label{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;min-height:44px;
+  border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-md);
+  color:var(--text-2);font-size:13.5px;cursor:pointer;transition:all .15s;
+}
+.mc-options label:hover{background:var(--surface-3);color:var(--text)}
+.mc-options input{position:absolute;opacity:0;width:0;height:0}
+.mc-options label:has(input:checked){background:rgba(15,186,142,.14);border-color:var(--success);color:var(--text);font-weight:600}
+.mc-options label:has(input:checked)::after{content:'✓';margin-left:auto;color:var(--success);font-weight:700}
+.mc-options.invalid label{border-color:var(--danger)}
+
+/* reference blocks */
+.ref-block{border:1px dashed var(--border-strong);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;background:var(--surface-2)}
+.ref-block h3{margin:0 0 12px;font-size:13px;font-weight:700;color:var(--text)}
+
+/* attestation checkbox rows */
+.checkbox-row{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;transition:all .15s;margin-bottom:12px}
+.checkbox-row:hover{background:var(--surface-3)}
+.checkbox-row.checked{background:var(--accent-dim);border-color:var(--accent)}
+.checkbox-row.invalid{border-color:var(--danger)}
+.checkbox-row input[type=checkbox]{accent-color:var(--accent);width:17px;height:17px;flex-shrink:0;margin-top:2px;cursor:pointer}
+.checkbox-row p{margin:0;font-size:13px;color:var(--text-2);line-height:1.55}
+.checkbox-row.checked p{color:var(--text)}
+.checkbox-row p .req{color:#ef6b6b;font-weight:700}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:var(--input-h);padding:0 18px;border-radius:var(--radius-md);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+.btn-ghost{background:transparent;color:var(--text-muted)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn-lg{height:50px;padding:0 26px;font-size:14px;font-weight:700;letter-spacing:.01em}
+.btn-submit{background:var(--success);color:#fff;border-color:var(--success);box-shadow:0 8px 24px rgba(15,186,142,.25)}
+.btn-submit:hover{filter:brightness(1.07);box-shadow:0 10px 28px rgba(15,186,142,.4)}
+
+/* toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--card-solid);border:1px solid var(--border-strong);border-radius:var(--radius-md);
+  padding:14px 22px;color:var(--text);font-size:13.5px;box-shadow:var(--shadow-lg);
+  display:flex;gap:10px;align-items:center;opacity:0;pointer-events:none;transition:all .25s;z-index:300;max-width:90vw;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{border-color:var(--success)}
+.toast.error{border-color:var(--danger)}
+
+/* success modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal-card{background:var(--card-solid);border:1px solid var(--border-strong);border-radius:var(--radius-xl);max-width:480px;width:100%;padding:36px 32px;text-align:center;box-shadow:var(--shadow-lg)}
+.modal-card .check{width:64px;height:64px;border-radius:50%;background:rgba(15,186,142,.15);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 18px}
+.modal-card h3{font-size:22px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em}
+.modal-card p{color:var(--text-2);font-size:13.5px;margin-bottom:22px;line-height:1.55}
+.modal-card .ref{font-family:var(--mono);font-size:12px;color:var(--text-muted);background:var(--surface-2);padding:8px 14px;border-radius:var(--radius-sm);display:inline-block;margin-bottom:20px;letter-spacing:.04em}
+.modal-card .modal-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* footer */
+.app-footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--border);text-align:center;color:var(--text-muted);font-size:12px}
+.app-footer a{color:var(--text-2);text-decoration:none;margin:0 8px}
+
+@media print{.summary-col,.submit-error-banner{display:none}.app-shell{padding:0}body{background:#fff!important}}
+</style>
+</head>
+<body>
+
+<!-- Hidden logo — kept in the DOM so the branded PDF can read its base64 src. -->
+<img class="logo-img" alt="" aria-hidden="true" style="display:none" src="data:image/png;base64,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AACADkUyAAAAAAAAAB2KZAAAAAAAAAA6FMkAAAAAAAAAdCiSAQAAAAAAAOhQJAMAAAAAAADQoUgGAAAAAAAAoEORDAAAAAAAAECHIhkAAAAAAACADkUyAAAAAAAAAB2KZAAAAAAAAAA6FMkAAAAAAAAAdCiSAQAAAAAAAOhQJAMAAAAAAADQoUgGAAAAAAAAoEORDAAAAAAAAECHIhkAAAAAAACADkUyAAAAAAAAAB2KZAAAAAAAAAA6FMkAAAAAAAAAdCiSAQAAAAAAAOhQJAMAAAAAAADQoUgGAAAAAAAAoEORDAAAAAAAAECHIhkAAAAAAACADkUyAAAAAAAAAB2KZAAAAAAAAAA6FMkAAAAAAAAAdCiSAQAAAAAAAOhQJAMAAAAAAADQoUgGAAAAAAAAoEORDAAAAAAAAECHIhkAAAAAAACADkUyAAAAAAAAAB2KZAAAAAAAAAA6FMkAAAAAAAAAdCiSAQAAAAAAAOhQJAMAAAAAAADQoUgGAAAAAAAAoEORDAAAAAAAAECHIhkAAAAAAACADkUyAAAAAAAAAB2KZAAAAAAAAAA6FMkAAAAAAAAAdCiSAQAAAAAAAOhQJAMAAAAAAADQoUgGAAAAAAAAoEORDAAAAAAAAECHIhkAAAAAAACADkUyAAAAAAAAAB2KZAAAAAAAAAA6FMkAAAAAAAAAdCiSAQAAAAAAAOhQJAMAAAAAAADQoUgGAAAAAAAAoEORDAAAAAAAAECHIhkAAAAAAACADkUyAAAAAAAAAB2KZAAAAAAAAAA6FMkAAAAAAAAAdPw/46P137IYc2gAAAAASUVORK5CYII=">
+
+<main class="app-shell">
+  <button id="theme-toggle" type="button" aria-label="Toggle light or dark theme" title="Toggle light/dark">
+    <span class="ti" id="theme-icon" aria-hidden="true"></span>
+    <span class="tlabel" id="theme-label">Light</span>
+  </button>
+
+  <div class="hero">
+    <div class="eyebrow">Certified Installer Program</div>
+    <h1>Installer Application Questionnaire</h1>
+    <p>This application is how we evaluate installers for the MacroAir Certified Installer Program. Answer every question as specifically as you can — installations, licenses, safety programs, and reference details are independently verified.</p>
+    <div class="meta">
+      <span><b>10</b> sections</span>
+      <span><b>36</b> questions</span>
+      <span><b>~15 min</b> to complete</span>
+      <span>Questions: <a href="mailto:jpennington@macroairfans.com">jpennington@macroairfans.com</a></span>
+    </div>
+  </div>
+
+  <div class="info-note">
+    <b>Before you start:</b> Have your license numbers, insurance carrier and coverage amounts, most recent TRIR (Total Recordable Incident Rate) and EMR (Experience Modification Rate) figures, and three professional references on hand. Fields marked <span style="color:#ef6b6b;font-weight:700">*</span> are required to submit. A few questions carry extra weight in our review — those are flagged <span class="key-flag">Key criterion</span>.
+  </div>
+
+  <form id="installer-form" autocomplete="on" onsubmit="event.preventDefault();return false;">
+  <div class="layout">
+    <div class="form-col">
+
+      <div class="submit-error-banner" id="submit-error-banner" role="alert" aria-live="polite">
+        <span class="icon">!</span>
+        <span><span class="count" id="submit-error-count">0</span> required field<span id="submit-error-plural">s</span> still need attention. Highlighted in red below.</span>
+        <button type="button" class="scroll-btn" id="submit-error-scroll">Jump to first ↓</button>
+      </div>
+
+      <!-- 1 :: Company Info -->
+      <section class="form-section" id="sec-1" data-label="Company Info">
+        <div class="section-label">1. Company Info</div>
+        <div class="glass-card">
+          <div class="q">
+            <label class="q-label" for="q1">Company legal name and DBA (if different)<span class="req">*</span></label>
+            <input class="form-input" type="text" id="q1" required placeholder="Legal entity name — DBA name if applicable">
+          </div>
+
+          <div class="q">
+            <label class="q-label">Business entity type, year established, and website<span class="req">*</span></label>
+            <div class="field-row">
+              <div>
+                <select class="form-select" id="q2_type" required>
+                  <option value="">Entity type…</option>
+                  <option>LLC</option><option>Corporation</option><option>Partnership</option>
+                  <option>Sole Proprietorship</option><option>Other</option>
+                </select>
+              </div>
+              <div><input class="form-input" type="text" id="q2_year" required placeholder="Year established"></div>
+              <div><input class="form-input" type="text" id="q2_site" placeholder="Website (optional)"></div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Primary contact — name, title, email, phone<span class="req">*</span></label>
+            <p class="q-hint">This person receives all program communications, including lead notifications.</p>
+            <div class="field-row">
+              <div><input class="form-input" type="text" id="q3_name" required placeholder="Full name"></div>
+              <div><input class="form-input" type="text" id="q3_title" required placeholder="Title"></div>
+            </div>
+            <div class="field-row">
+              <div><input class="form-input" type="email" id="q3_email" required placeholder="Email"></div>
+              <div><input class="form-input" type="tel" id="q3_phone" required placeholder="Phone"></div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label" for="q4">What is your HVLS experience?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">Describe your background specifically with high-volume, low-speed fans — brands installed, approximate volume, facility types, and years of experience. General ceiling fan or HVAC experience alone won't answer this — be specific.</p>
+            <textarea class="form-textarea" id="q4" required rows="4"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 :: Licensing -->
+      <section class="form-section" id="sec-2" data-label="Licensing">
+        <div class="section-label">2. Licensing</div>
+        <div class="glass-card">
+          <div class="q">
+            <label class="q-label">Active Electrical Contractor license(s)?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">Required in every state where your crews perform electrical work; MacroAir verifies independently.</p>
+            <div class="yesno">
+              <label><input type="radio" name="q5" value="Yes" required> Yes</label>
+              <label><input type="radio" name="q5" value="No" required> No</label>
+            </div>
+            <input class="form-input" type="text" id="q5_detail" style="margin-top:10px" placeholder="License number(s) and issuing state(s)">
+          </div>
+
+          <div class="q">
+            <label class="q-label">Active HVAC Contractor license(s)?</label>
+            <p class="q-hint">Preferred; required for projects involving BAS/BMS integration.</p>
+            <div class="yesno">
+              <label><input type="radio" name="q6" value="Yes"> Yes</label>
+              <label><input type="radio" name="q6" value="No"> No</label>
+              <label><input type="radio" name="q6" value="N/A"> Not applicable</label>
+            </div>
+            <input class="form-input" type="text" id="q6_detail" style="margin-top:10px" placeholder="License number(s), if applicable">
+          </div>
+
+          <div class="q">
+            <label class="q-label">Is your company in good standing with all licensing boards? Has any license ever been suspended or revoked?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <div class="field-row">
+              <div>
+                <p class="field-note">Currently in good standing?</p>
+                <div class="yesno">
+                  <label><input type="radio" name="q7_standing" value="Yes" required> Yes</label>
+                  <label><input type="radio" name="q7_standing" value="No" required> No</label>
+                </div>
+              </div>
+              <div>
+                <p class="field-note">Any past suspension/revocation?</p>
+                <div class="yesno">
+                  <label><input type="radio" name="q7_past" value="No" required> No</label>
+                  <label><input type="radio" name="q7_past" value="Yes" required> Yes</label>
+                </div>
+              </div>
+            </div>
+            <textarea class="form-textarea" id="q7_explain" rows="2" style="margin-top:10px" placeholder="If yes to either, explain"></textarea>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Do you conduct criminal background checks on all field employees before hire?<span class="req">*</span></label>
+            <p class="q-hint">Installers access secured industrial facilities as part of this program.</p>
+            <div class="yesno">
+              <label><input type="radio" name="q8" value="Yes" required> Yes</label>
+              <label><input type="radio" name="q8" value="No" required> No</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 :: Insurance & Bonding -->
+      <section class="form-section" id="sec-3" data-label="Insurance &amp; Bonding">
+        <div class="section-label">3. Insurance &amp; Bonding</div>
+        <div class="glass-card">
+          <div class="q">
+            <label class="q-label">General liability insurance — carrier and coverage amount<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">MacroAir's minimum is <b>$2,000,000</b> in general liability coverage.</p>
+            <div class="field-row">
+              <div><input class="form-input" type="text" id="q9_carrier" required placeholder="Carrier name"></div>
+              <div>
+                <select class="form-select" id="q9_amount" required>
+                  <option value="">Coverage amount…</option>
+                  <option>$1M</option><option>$2M</option><option>$5M</option><option>$10M+</option>
+                  <option>Under $1M</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Workers' compensation insurance<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">Required, no exceptions.</p>
+            <div class="yesno">
+              <label><input type="radio" name="q10" value="Yes" required> Yes, we carry it</label>
+              <label><input type="radio" name="q10" value="No" required> No</label>
+            </div>
+            <input class="form-input" type="text" id="q10_carrier" style="margin-top:10px" placeholder="Carrier name">
+          </div>
+
+          <div class="q">
+            <label class="q-label">Are you bonded? Experience Modification Rate (EMR), most recent year<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">EMR of 1.0 or lower is required for Certified status; above 1.25 needs an explanation.</p>
+            <div class="field-row">
+              <div>
+                <div class="yesno">
+                  <label><input type="radio" name="q11_bonded" value="Yes" required> Bonded</label>
+                  <label><input type="radio" name="q11_bonded" value="No" required> Not bonded</label>
+                </div>
+              </div>
+              <div><input class="form-input" type="number" step="0.01" id="q11_emr" required placeholder="Most recent EMR (e.g. 0.92)"></div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Can you provide a Certificate of Insurance naming MacroAir as additionally insured within 5 business days of request?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <div class="yesno">
+              <label><input type="radio" name="q12" value="Yes" required> Yes</label>
+              <label><input type="radio" name="q12" value="No" required> No</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 :: Mechanical Experience -->
+      <section class="form-section" id="sec-4" data-label="Mechanical Experience">
+        <div class="section-label">4. Mechanical Experience</div>
+        <div class="glass-card">
+          <div class="q">
+            <label class="q-label">Years in commercial/industrial installation, and years specifically installing HVLS or large ceiling fans<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <div class="field-row">
+              <div><input class="form-input" type="number" id="q13_general" required placeholder="Years — commercial/industrial (general)"></div>
+              <div><input class="form-input" type="number" id="q13_hvls" required placeholder="Years — HVLS / large fans specifically"></div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Approximate number of HVLS fans installed to date, all brands combined<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <select class="form-select" id="q14" required>
+              <option value="">Select a range…</option>
+              <option>0</option><option>1–10</option><option>11–50</option><option>51–200</option><option>200+</option>
+            </select>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Are you familiar with equipment that uses Variable Frequency Drives (VFDs)?<span class="req">*</span></label>
+            <p class="q-hint">MacroAir fans ship with VFDs factory pre-programmed — no on-site VFD configuration is required. General familiarity is preferred.</p>
+            <div class="yesno">
+              <label><input type="radio" name="q15" value="Yes" required> Yes</label>
+              <label><input type="radio" name="q15" value="No" required> No</label>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Experience mounting equipment using beam clamps on structural steel (I-beam or H-beam)?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">All MacroAir fans mount via beam clamp to structural steel — this is a required capability.</p>
+            <div class="yesno">
+              <label><input type="radio" name="q16" value="Yes" required> Yes</label>
+              <label><input type="radio" name="q16" value="No" required> No</label>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Largest single project — how many MacroAir or HVLS fans have you installed at one facility?<span class="req">*</span></label>
+            <select class="form-select" id="q17" required>
+              <option value="">Select a range…</option>
+              <option>1</option><option>2–5</option><option>6–20</option><option>21–50</option><option>51+</option>
+            </select>
+          </div>
+
+          <div class="q">
+            <label class="q-label" for="q18">Describe your most complex HVLS installation — what made it challenging and exactly how did you resolve it?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">Be specific and operational — this tells us more about judgment and safety awareness than any other question. Generic answers won't stand out.</p>
+            <textarea class="form-textarea" id="q18" required rows="4"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 :: Safety Record -->
+      <section class="form-section" id="sec-5" data-label="Safety Record">
+        <div class="section-label">5. Safety Record</div>
+        <div class="glass-card">
+          <div class="q">
+            <label class="q-label">TRIR (Total Recordable Incident Rate) for the past 3 years<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <div class="field-row">
+              <div><input class="form-input" type="text" id="q19_y1" required placeholder="Most recent year"></div>
+              <div><input class="form-input" type="text" id="q19_y2" required placeholder="Year 2"></div>
+              <div><input class="form-input" type="text" id="q19_y3" required placeholder="Year 3"></div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Written OSHA-compliant safety program on file? Regular safety toolbox talks conducted?<span class="req">*</span></label>
+            <div class="field-row">
+              <div>
+                <p class="field-note">Written safety program on file</p>
+                <div class="yesno"><label><input type="radio" name="q20_program" value="Yes" required> Yes</label><label><input type="radio" name="q20_program" value="No" required> No</label></div>
+              </div>
+              <div>
+                <p class="field-note">Regular toolbox talks</p>
+                <div class="yesno"><label><input type="radio" name="q20_talks" value="Yes" required> Yes</label><label><input type="radio" name="q20_talks" value="No" required> No</label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Written Lockout/Tagout (LOTO) procedures per OSHA 1910.147? All field employees trained and documented?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <div class="field-row">
+              <div>
+                <p class="field-note">Written LOTO procedures</p>
+                <div class="yesno"><label><input type="radio" name="q21_written" value="Yes" required> Yes</label><label><input type="radio" name="q21_written" value="No" required> No</label></div>
+              </div>
+              <div>
+                <p class="field-note">Training documented for all field staff</p>
+                <div class="yesno"><label><input type="radio" name="q21_trained" value="Yes" required> Yes</label><label><input type="radio" name="q21_trained" value="No" required> No</label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Written Fall Protection Program per OSHA 1926.502? Aerial lift operators hold current certifications?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">HVLS installs typically require lift work at 20–60 ft.</p>
+            <div class="field-row">
+              <div>
+                <p class="field-note">Written fall protection program</p>
+                <div class="yesno"><label><input type="radio" name="q22_program" value="Yes" required> Yes</label><label><input type="radio" name="q22_program" value="No" required> No</label></div>
+              </div>
+              <div>
+                <p class="field-note">Lift operators currently certified</p>
+                <div class="yesno"><label><input type="radio" name="q22_certs" value="Yes" required> Yes</label><label><input type="radio" name="q22_certs" value="No" required> No</label></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 :: Knowledge Assessment -->
+      <section class="form-section" id="sec-6" data-label="Knowledge Assessment">
+        <div class="section-label">6. Knowledge Assessment</div>
+        <div class="glass-card">
+          <div class="q">
+            <label class="q-label">Per OSHA, what is the minimum clearance between the lowest HVLS fan blade and the floor?<span class="req">*</span></label>
+            <div class="mc-options">
+              <label><input type="radio" name="q23" value="5 ft" required> A) 5 ft</label>
+              <label><input type="radio" name="q23" value="7 ft" required> B) 7 ft</label>
+              <label><input type="radio" name="q23" value="10 ft" required> C) 10 ft</label>
+              <label><input type="radio" name="q23" value="12 ft" required> D) 12 ft</label>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Which code governs circuit sizing and wiring for a commercial fan motor installation?<span class="req">*</span></label>
+            <div class="mc-options">
+              <label><input type="radio" name="q24" value="NFPA 13" required> A) NFPA 13</label>
+              <label><input type="radio" name="q24" value="NFPA 70 (NEC)" required> B) NFPA 70 (NEC)</label>
+              <label><input type="radio" name="q24" value="UL 507" required> C) UL 507</label>
+              <label><input type="radio" name="q24" value="AMCA 210" required> D) AMCA 210</label>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label" for="q25">Walk through your commissioning sequence, from arriving on-site to applying first full power to a new MacroAir fan<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <p class="q-hint">Be specific and sequential. Strong answers cover: pre-inspection, structural verification, lockout/tagout, wiring, torque verification, blade clearance check, low-speed spin test, escalation path, and documentation.</p>
+            <textarea class="form-textarea" id="q25" required rows="5"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 :: Equipment & Capacity -->
+      <section class="form-section" id="sec-7" data-label="Equipment &amp; Capacity">
+        <div class="section-label">7. Equipment &amp; Capacity</div>
+        <div class="glass-card">
+          <div class="q">
+            <label class="q-label">Aerial work platforms — own, rent, or both? Maximum working height? Operators certified?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <div class="field-row">
+              <div>
+                <select class="form-select" id="q26_own" required>
+                  <option value="">Own / rent / both…</option>
+                  <option>Own</option><option>Rent</option><option>Both</option><option>Neither</option>
+                </select>
+              </div>
+              <div><input class="form-input" type="text" id="q26_height" required placeholder="Maximum working height"></div>
+            </div>
+            <div class="yesno" style="margin-top:10px">
+              <label><input type="radio" name="q26_certs" value="Yes" required> Operators certified per OSHA 1926.453</label>
+              <label><input type="radio" name="q26_certs" value="No" required> Not currently</label>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label">Calibrated torque wrenches in inventory? Size of HVLS crew (FTE)? Max fans installed per day?<span class="req">*</span></label>
+            <div class="yesno">
+              <label><input type="radio" name="q27_torque" value="Yes" required> Have calibrated torque wrenches</label>
+              <label><input type="radio" name="q27_torque" value="No" required> Do not</label>
+            </div>
+            <div class="field-row" style="margin-top:10px">
+              <div><input class="form-input" type="number" id="q27_crew" required placeholder="HVLS crew size (FTE)"></div>
+              <div><input class="form-input" type="number" id="q27_maxday" required placeholder="Max fans installed per day"></div>
+            </div>
+          </div>
+
+          <div class="q">
+            <label class="q-label" for="q28">How far are you willing to travel for installation projects? For warranty/service calls? Any states or regions you won't cover?<span class="req">*</span></label>
+            <p class="q-hint">Be specific — list states or regions. This determines lead routing, so accuracy matters more than breadth.</p>
+            <textarea class="form-textarea" id="q28" required rows="3"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8 :: References -->
+      <section class="form-section" id="sec-8" data-label="References">
+        <div class="section-label">8. References</div>
+        <div class="section-sub">Commercial or industrial HVLS projects are preferred. MacroAir contacts all three references directly.</div>
+        <div class="glass-card">
+          <div class="ref-block">
+            <h3>Reference 1</h3>
+            <div class="field-row">
+              <div><input class="form-input" type="text" id="q29_company" required placeholder="Client company"></div>
+              <div><input class="form-input" type="text" id="q29_contact" required placeholder="Contact name &amp; title"></div>
+            </div>
+            <div class="field-row">
+              <div><input class="form-input" type="tel" id="q29_phone" required placeholder="Phone"></div>
+              <div><input class="form-input" type="email" id="q29_email" required placeholder="Email"></div>
+            </div>
+            <div class="field-row">
+              <div style="flex:2 1 300px"><input class="form-input" type="text" id="q29_project" required placeholder="Project description — facility type, # of fans, scope"></div>
+              <div><input class="form-input" type="text" id="q29_year" required placeholder="Year"></div>
+            </div>
+          </div>
+
+          <div class="ref-block">
+            <h3>Reference 2</h3>
+            <div class="field-row">
+              <div><input class="form-input" type="text" id="q30_company" required placeholder="Client company"></div>
+              <div><input class="form-input" type="text" id="q30_contact" required placeholder="Contact name &amp; title"></div>
+            </div>
+            <div class="field-row">
+              <div><input class="form-input" type="tel" id="q30_phone" required placeholder="Phone"></div>
+              <div><input class="form-input" type="email" id="q30_email" required placeholder="Email"></div>
+            </div>
+            <div class="field-row">
+              <div style="flex:2 1 300px"><input class="form-input" type="text" id="q30_project" required placeholder="Project description — facility type, # of fans, scope"></div>
+              <div><input class="form-input" type="text" id="q30_year" required placeholder="Year"></div>
+            </div>
+          </div>
+
+          <div class="ref-block">
+            <h3>Reference 3</h3>
+            <div class="field-row">
+              <div><input class="form-input" type="text" id="q31_company" required placeholder="Client company"></div>
+              <div><input class="form-input" type="text" id="q31_contact" required placeholder="Contact name &amp; title"></div>
+            </div>
+            <div class="field-row">
+              <div><input class="form-input" type="tel" id="q31_phone" required placeholder="Phone"></div>
+              <div><input class="form-input" type="email" id="q31_email" required placeholder="Email"></div>
+            </div>
+            <div class="field-row">
+              <div style="flex:2 1 300px"><input class="form-input" type="text" id="q31_project" required placeholder="Project description — facility type, # of fans, scope"></div>
+              <div><input class="form-input" type="text" id="q31_year" required placeholder="Year"></div>
+            </div>
+          </div>
+
+          <div class="q" style="border-bottom:none;padding-bottom:0;margin-bottom:0">
+            <label class="q-label">I consent to MacroAir contacting all three references and independently verifying project details.<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <div class="yesno">
+              <label><input type="radio" name="q32" value="Yes" required> Yes, I consent</label>
+              <label><input type="radio" name="q32" value="No" required> No</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9 :: Program Fit -->
+      <section class="form-section" id="sec-9" data-label="Program Fit">
+        <div class="section-label">9. Program Fit</div>
+        <div class="glass-card">
+          <div class="q">
+            <label class="q-label">Target MacroAir installer tier<span class="req">*</span></label>
+            <p class="q-hint">Tier determines lead routing, rep assignment, and co-marketing investment.</p>
+            <select class="form-select" id="q33" required>
+              <option value="">Select a tier…</option>
+              <option>Certified (1–12 installs/yr)</option>
+              <option>Silver (13–50 installs/yr)</option>
+              <option>Gold (51–150 installs/yr)</option>
+              <option>Platinum (150+ installs/yr)</option>
+            </select>
+          </div>
+
+          <div class="q">
+            <label class="q-label" for="q34">Which facility types are you most experienced in and want to focus on?<span class="req">*</span></label>
+            <p class="q-hint">e.g. warehouse/distribution, manufacturing, agriculture, aviation, cold storage, sports &amp; recreation. Used to match you with the right leads.</p>
+            <textarea class="form-textarea" id="q34" required rows="3"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10 :: Attestation -->
+      <section class="form-section" id="sec-10" data-label="Attestation">
+        <div class="section-label">10. Attestation</div>
+        <div class="glass-card">
+          <div class="checkbox-row" id="q35_row">
+            <input type="checkbox" id="q35" required>
+            <p>MacroAir requires all quote responses returned within <b>48 hours</b> of receipt. Installers who do not respond within this window will be removed from active lead distribution. I acknowledge and commit to this requirement.<span class="req">*</span></p>
+          </div>
+
+          <div class="checkbox-row" id="q36_confirm_row">
+            <input type="checkbox" id="q36_confirm" required>
+            <p>I confirm all information provided in this application is accurate. I consent to MacroAir's verification of all licenses, insurance, EMR (Experience Modification Rate), TRIR (Total Recordable Incident Rate), and references. I agree to complete factory training before performing any certified installation, and to annual re-certification.<span class="req">*</span></p>
+          </div>
+
+          <div class="q" style="margin-top:18px;border-bottom:none;padding-bottom:0">
+            <label class="q-label">Applicant full name and date<span class="req">*</span></label>
+            <div class="field-row">
+              <div><input class="form-input" type="text" id="q36_name" required placeholder="Full name"></div>
+              <div><input class="form-input" type="text" id="q36_date" required placeholder="Date" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /.form-col -->
+
+    <aside class="summary-col" aria-label="Application progress">
+      <div class="section-label">Application Progress</div>
+      <div class="summary-card">
+        <div class="progress-wrap">
+          <div class="progress-row"><span>Sections complete</span><b><span id="prog-num">0</span>%</b></div>
+          <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+        </div>
+
+        <div class="sec-list" id="sec-list"></div>
+
+        <div class="sum-meta" id="sum-meta">
+          <div class="sum-meta-row"><span>Company</span><b id="meta-org">—</b></div>
+          <div class="sum-meta-row"><span>HVLS Fans Installed</span><b id="meta-fans">—</b></div>
+          <div class="sum-meta-row"><span>Applicant</span><b id="meta-signer">—</b></div>
+        </div>
+
+        <button type="button" class="btn btn-lg btn-submit sum-submit" id="submit-btn">Submit Application →</button>
+        <p class="submit-note" style="font-size:11.5px;color:var(--text-muted);margin-top:10px;line-height:1.5">Your application and a PDF copy are sent directly to MacroAir's Certified Installer Program team.</p>
+      </div>
+    </aside>
+  </div><!-- /.layout -->
+  </form>
+
+  <div class="app-footer">
+    MacroAir Technologies, Inc. &nbsp;·&nbsp; 866.668.3247 &nbsp;·&nbsp; <a href="https://www.macroairfans.com">www.macroairfans.com</a><br/>
+    © <span id="copy-year"></span> MacroAir Technologies, Inc. — all rights reserved.
+  </div>
+
+</main>
+
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<div class="modal-backdrop" id="success-modal">
+  <div class="modal-card">
+    <div class="check">✓</div>
+    <h3>Application submitted</h3>
+    <p>Thanks — your application has been sent to MacroAir's Certified Installer Program team. A confirmation with your PDF copy has been sent to your email. We'll follow up within a few business days.</p>
+    <div class="ref" id="modal-ref"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="modal-download">Download PDF copy</button>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('success-modal').classList.remove('open')">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   CONFIG
+═════════════════════════════════════════════════════════════════ */
+// Replace with your deployed Cloudflare Worker URL once live.
+const WORKER_URL = 'https://installer-application.macroairfans.workers.dev';
+const LOGO_DATA_URI = document.querySelector('.logo-img').src;
+
+/* ════════════════════════════════════════════════════════════════
+   THEME
+═════════════════════════════════════════════════════════════════ */
+(function initTheme(){
+  function paint(isLight){
+    document.documentElement.classList.toggle('light', isLight);
+    document.getElementById('theme-icon').textContent = isLight ? '☀️' : '🌙';
+    document.getElementById('theme-label').textContent = isLight ? 'Light' : 'Dark';
+  }
+  const saved = localStorage.getItem('ma-theme') || 'light';
+  paint(saved === 'light');
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const next = !document.documentElement.classList.contains('light');
+    paint(next);
+    localStorage.setItem('ma-theme', next ? 'light' : 'dark');
+  });
+})();
+
+document.getElementById('copy-year').textContent = new Date().getFullYear();
+
+/* ════════════════════════════════════════════════════════════════
+   FIELD HELPERS
+═════════════════════════════════════════════════════════════════ */
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function radioVal(name){ const el = document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : ''; }
+function checkVal(id){ const el = document.getElementById(id); return !!(el && el.checked); }
+
+/* ════════════════════════════════════════════════════════════════
+   SUMMARY PANEL — section list, progress, live meta, scroll-spy
+═════════════════════════════════════════════════════════════════ */
+const sections = Array.from(document.querySelectorAll('.form-section'));
+
+function sectionComplete(sec){
+  const fields = sec.querySelectorAll('input[required], textarea[required], select[required]');
+  if(fields.length === 0) return true;
+  const seenNames = new Set();
+  for(const f of fields){
+    if(f.type === 'radio'){
+      if(seenNames.has(f.name)) continue;
+      seenNames.add(f.name);
+      if(!sec.querySelector('input[name="'+f.name+'"]:checked')) return false;
+    } else if(f.type === 'checkbox'){
+      if(!f.checked) return false;
+    } else {
+      if(!f.value.trim()) return false;
+    }
+  }
+  return true;
+}
+
+(function initSummary(){
+  const list = document.getElementById('sec-list');
+  sections.forEach((sec, i) => {
+    const label = sec.dataset.label || sec.querySelector('.section-label').textContent;
+    const a = document.createElement('button');
+    a.type = 'button';
+    a.className = 'sec-link';
+    a.dataset.idx = i;
+    a.innerHTML = '<span class="dot"></span><span>' + label + '</span>';
+    a.addEventListener('click', () => {
+      const top = sec.getBoundingClientRect().top + window.pageYOffset - 16;
+      window.scrollTo({ top, behavior: 'smooth' });
+    });
+    list.appendChild(a);
+  });
+
+  function activeIdx(){
+    const threshold = 120;
+    let best = 0;
+    for(let i = 0; i < sections.length; i++){
+      const top = sections[i].getBoundingClientRect().top;
+      if(top - threshold <= 0) best = i; else break;
+    }
+    return best;
+  }
+
+  function refresh(){
+    const active = activeIdx();
+    let done = 0;
+    Array.from(list.children).forEach((node, i) => {
+      const complete = sectionComplete(sections[i]);
+      node.classList.toggle('complete', complete);
+      node.classList.toggle('active', i === active);
+      if(complete) done++;
+    });
+    const pct = Math.round((done / sections.length) * 100);
+    document.getElementById('prog-num').textContent = pct;
+    document.getElementById('prog-fill').style.width = pct + '%';
+
+    document.getElementById('meta-org').textContent = val('q1') || '—';
+    document.getElementById('meta-fans').textContent = val('q14') || '—';
+    const nm = val('q36_name') || val('q3_name');
+    document.getElementById('meta-signer').textContent = nm || '—';
+  }
+
+  document.addEventListener('input', refresh);
+  document.addEventListener('change', refresh);
+  document.addEventListener('click', () => setTimeout(refresh, 30));
+  let raf = 0;
+  window.addEventListener('scroll', () => {
+    if(raf) return;
+    raf = requestAnimationFrame(() => { refresh(); raf = 0; });
+  }, { passive: true });
+  window.addEventListener('resize', refresh);
+  setTimeout(refresh, 50);
+})();
+
+/* Toggle .checked highlight on attestation rows */
+document.querySelectorAll('.checkbox-row input[type=checkbox]').forEach(cb => {
+  const row = cb.closest('.checkbox-row');
+  const sync = () => row.classList.toggle('checked', cb.checked);
+  cb.addEventListener('change', sync);
+});
+
+/* ════════════════════════════════════════════════════════════════
+   TOAST
+═════════════════════════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg, kind = 'success'){
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.remove('success', 'error');
+  t.classList.add(kind, 'show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 4200);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   VALIDATION — mark invalid fields/groups, drive the error banner
+═════════════════════════════════════════════════════════════════ */
+const errorBanner = document.getElementById('submit-error-banner');
+
+function clearInvalid(){
+  document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid', 'flash'));
+}
+
+function validate(){
+  clearInvalid();
+  let firstBad = null;
+  const seenNames = new Set();
+
+  sections.forEach(sec => {
+    const fields = sec.querySelectorAll('input[required], textarea[required], select[required]');
+    fields.forEach(f => {
+      let bad = false, target = f;
+      if(f.type === 'radio'){
+        if(seenNames.has(f.name)) return;
+        seenNames.add(f.name);
+        if(!sec.querySelector('input[name="'+f.name+'"]:checked')){
+          bad = true;
+          target = f.closest('.yesno, .mc-options') || f;
+        }
+      } else if(f.type === 'checkbox'){
+        if(!f.checked){ bad = true; target = f.closest('.checkbox-row') || f; }
+      } else {
+        if(!f.value.trim()){ bad = true; target = f; }
+      }
+      if(bad){
+        target.classList.add('invalid', 'flash');
+        if(!firstBad) firstBad = target;
+      }
+    });
+  });
+
+  const count = document.querySelectorAll('.invalid').length;
+  if(count > 0){
+    document.getElementById('submit-error-count').textContent = count;
+    document.getElementById('submit-error-plural').textContent = count === 1 ? '' : 's';
+    errorBanner.classList.add('show');
+  } else {
+    errorBanner.classList.remove('show');
+  }
+  return firstBad;
+}
+
+document.getElementById('submit-error-scroll').addEventListener('click', () => {
+  const first = document.querySelector('.invalid');
+  if(first) first.scrollIntoView({ behavior:'smooth', block:'center' });
+});
+
+/* live-clear invalid state as the user fixes fields */
+document.getElementById('installer-form').addEventListener('input', e => {
+  if(e.target.classList) e.target.classList.remove('invalid', 'flash');
+});
+document.getElementById('installer-form').addEventListener('change', e => {
+  const grp = e.target.closest && e.target.closest('.yesno, .mc-options, .checkbox-row');
+  if(grp) grp.classList.remove('invalid', 'flash');
+});
+
+/* ════════════════════════════════════════════════════════════════
+   PAYLOAD — structured JSON sent to the Worker (keep in sync w/ worker.js)
+═════════════════════════════════════════════════════════════════ */
+function collectFormData(){
+  return {
+    company: {
+      legalName: val('q1'),
+      entityType: val('q2_type'),
+      yearEstablished: val('q2_year'),
+      website: val('q2_site')
+    },
+    contact: {
+      name: val('q3_name'),
+      title: val('q3_title'),
+      email: val('q3_email'),
+      phone: val('q3_phone')
+    },
+    hvlsExperience: val('q4'),
+    licensing: {
+      electrical: { has: radioVal('q5'), detail: val('q5_detail') },
+      hvac: { has: radioVal('q6'), detail: val('q6_detail') },
+      goodStanding: radioVal('q7_standing'),
+      pastSuspension: radioVal('q7_past'),
+      suspensionExplain: val('q7_explain'),
+      backgroundChecks: radioVal('q8')
+    },
+    insurance: {
+      glCarrier: val('q9_carrier'),
+      glAmount: val('q9_amount'),
+      workersComp: radioVal('q10'),
+      wcCarrier: val('q10_carrier'),
+      bonded: radioVal('q11_bonded'),
+      emr: val('q11_emr'),
+      coiWithin5Days: radioVal('q12')
+    },
+    mechanical: {
+      yearsGeneral: val('q13_general'),
+      yearsHvls: val('q13_hvls'),
+      fansInstalledRange: val('q14'),
+      vfdFamiliar: radioVal('q15'),
+      beamClampExperience: radioVal('q16'),
+      largestProjectRange: val('q17'),
+      complexInstall: val('q18')
+    },
+    safety: {
+      trirY1: val('q19_y1'), trirY2: val('q19_y2'), trirY3: val('q19_y3'),
+      safetyProgram: radioVal('q20_program'),
+      toolboxTalks: radioVal('q20_talks'),
+      lotoWritten: radioVal('q21_written'),
+      lotoTrained: radioVal('q21_trained'),
+      fallProtectionProgram: radioVal('q22_program'),
+      liftCerts: radioVal('q22_certs')
+    },
+    knowledge: {
+      bladeClearance: radioVal('q23'),
+      electricalCode: radioVal('q24'),
+      commissioningSequence: val('q25')
+    },
+    equipment: {
+      aerialPlatforms: val('q26_own'),
+      maxHeight: val('q26_height'),
+      operatorsCertified: radioVal('q26_certs'),
+      torqueWrenches: radioVal('q27_torque'),
+      crewSize: val('q27_crew'),
+      maxFansPerDay: val('q27_maxday'),
+      travelCoverage: val('q28')
+    },
+    references: [
+      { company: val('q29_company'), contact: val('q29_contact'), phone: val('q29_phone'), email: val('q29_email'), project: val('q29_project'), year: val('q29_year') },
+      { company: val('q30_company'), contact: val('q30_contact'), phone: val('q30_phone'), email: val('q30_email'), project: val('q30_project'), year: val('q30_year') },
+      { company: val('q31_company'), contact: val('q31_contact'), phone: val('q31_phone'), email: val('q31_email'), project: val('q31_project'), year: val('q31_year') }
+    ],
+    referenceConsent: radioVal('q32'),
+    programFit: {
+      targetTier: val('q33'),
+      facilityFocus: val('q34')
+    },
+    attestation: {
+      responseCommitment: checkVal('q35'),
+      verificationConsent: checkVal('q36_confirm'),
+      applicantName: val('q36_name'),
+      date: val('q36_date')
+    }
+  };
+}
+
+function genRefNum(){
+  const d = new Date();
+  const stamp = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const rand = Math.floor(1000 + Math.random()*9000);
+  return 'IA-' + stamp + '-' + rand;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PDF GENERATION (branded — mirrors the credit-application PDF)
+═════════════════════════════════════════════════════════════════ */
+function buildPdf(data, refNum){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 46;
+  let y = 0;
+
+  const NAVY = [13, 40, 72];
+  const BLUE = [37, 150, 224];
+  const SLATE = [107, 120, 135];
+  const INK = [17, 26, 36];
+
+  function drawHeader(title, subtitle){
+    doc.setFillColor(...NAVY);
+    doc.rect(0, 0, pageW, 78, 'F');
+    try{ doc.addImage(LOGO_DATA_URI, 'PNG', marginX, 22, 110, 27); }catch(e){}
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(13);
+    doc.text(title, pageW - marginX, 34, { align:'right' });
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(200,216,232);
+    doc.text(subtitle, pageW - marginX, 50, { align:'right' });
+    y = 100;
+  }
+
+  function ensureSpace(h){
+    if(y + h > pageH - 50){
+      doc.addPage();
+      drawHeader('CERTIFIED INSTALLER APPLICATION', refNum + ' — continued');
+    }
+  }
+
+  function sectionTitle(label){
+    ensureSpace(30);
+    doc.setDrawColor(...BLUE);
+    doc.setLineWidth(1.5);
+    doc.line(marginX, y, marginX + 26, y);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(...NAVY);
+    doc.text(label, marginX, y + 14);
+    y += 26;
+  }
+
+  function field(label, value){
+    const text = (value === undefined || value === null || String(value).trim() === '') ? '—' : String(value);
+    const wrapped = doc.splitTextToSize(text, pageW - marginX*2);
+    ensureSpace(14 + wrapped.length * 12);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...SLATE);
+    doc.text(label.toUpperCase(), marginX, y);
+    y += 11;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...INK);
+    doc.text(wrapped, marginX, y);
+    y += wrapped.length * 12 + 8;
+  }
+
+  function fieldRow(pairs){
+    const colW = (pageW - marginX*2 - 20) / pairs.length;
+    ensureSpace(30);
+    const startY = y;
+    let maxH = 0;
+    pairs.forEach(([label, value], i) => {
+      const x = marginX + i * (colW + 20);
+      const text = (value === undefined || value === null || String(value).trim() === '') ? '—' : String(value);
+      const wrapped = doc.splitTextToSize(text, colW);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...SLATE);
+      doc.text(label.toUpperCase(), x, startY);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...INK);
+      doc.text(wrapped, x, startY + 11);
+      maxH = Math.max(maxH, 11 + wrapped.length * 12);
+    });
+    y = startY + maxH + 8;
+  }
+
+  drawHeader('CERTIFIED INSTALLER APPLICATION', refNum + '  ·  ' + new Date().toLocaleDateString());
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.setTextColor(...NAVY);
+  doc.text(data.company.legalName || 'Applicant', marginX, y + 8);
+  y += 30;
+
+  sectionTitle('COMPANY INFO');
+  fieldRow([['Entity Type', data.company.entityType], ['Year Established', data.company.yearEstablished]]);
+  field('Website', data.company.website);
+  fieldRow([['Primary Contact', data.contact.name + (data.contact.title ? ' — ' + data.contact.title : '')], ['Phone', data.contact.phone]]);
+  field('Email', data.contact.email);
+  field('HVLS Experience', data.hvlsExperience);
+
+  sectionTitle('LICENSING');
+  field('Electrical Contractor License', data.licensing.electrical.has + (data.licensing.electrical.detail ? ' — ' + data.licensing.electrical.detail : ''));
+  field('HVAC Contractor License', data.licensing.hvac.has + (data.licensing.hvac.detail ? ' — ' + data.licensing.hvac.detail : ''));
+  fieldRow([['Good Standing', data.licensing.goodStanding], ['Past Suspension/Revocation', data.licensing.pastSuspension]]);
+  if(data.licensing.suspensionExplain) field('Explanation', data.licensing.suspensionExplain);
+  field('Background Checks on Field Employees', data.licensing.backgroundChecks);
+
+  sectionTitle('INSURANCE & BONDING');
+  fieldRow([['General Liability Carrier', data.insurance.glCarrier], ['Coverage Amount', data.insurance.glAmount]]);
+  fieldRow([["Workers' Comp", data.insurance.workersComp], ['Carrier', data.insurance.wcCarrier]]);
+  fieldRow([['Bonded', data.insurance.bonded], ['EMR (Experience Modification Rate)', data.insurance.emr]]);
+  field('COI Naming MacroAir Within 5 Business Days', data.insurance.coiWithin5Days);
+
+  sectionTitle('MECHANICAL EXPERIENCE');
+  fieldRow([['Years — General Commercial/Industrial', data.mechanical.yearsGeneral], ['Years — HVLS Specific', data.mechanical.yearsHvls]]);
+  fieldRow([['HVLS Fans Installed To Date', data.mechanical.fansInstalledRange], ['Largest Single Project', data.mechanical.largestProjectRange]]);
+  fieldRow([['VFD Familiarity', data.mechanical.vfdFamiliar], ['Beam Clamp / Structural Steel Experience', data.mechanical.beamClampExperience]]);
+  field('Most Complex Installation', data.mechanical.complexInstall);
+
+  sectionTitle('SAFETY RECORD');
+  field('TRIR (Total Recordable Incident Rate) — Past 3 Years', data.safety.trirY1 + ' / ' + data.safety.trirY2 + ' / ' + data.safety.trirY3);
+  fieldRow([['Written Safety Program', data.safety.safetyProgram], ['Regular Toolbox Talks', data.safety.toolboxTalks]]);
+  fieldRow([['LOTO Written', data.safety.lotoWritten], ['LOTO Trained/Documented', data.safety.lotoTrained]]);
+  fieldRow([['Fall Protection Program', data.safety.fallProtectionProgram], ['Lift Operators Certified', data.safety.liftCerts]]);
+
+  sectionTitle('KNOWLEDGE ASSESSMENT');
+  fieldRow([['Min. Blade Clearance From Floor', data.knowledge.bladeClearance], ['Governing Electrical Code', data.knowledge.electricalCode]]);
+  field('Commissioning Sequence', data.knowledge.commissioningSequence);
+
+  sectionTitle('EQUIPMENT & CAPACITY');
+  fieldRow([['Aerial Platforms', data.equipment.aerialPlatforms], ['Max Working Height', data.equipment.maxHeight]]);
+  field('Operators Certified (OSHA 1926.453)', data.equipment.operatorsCertified);
+  fieldRow([['Calibrated Torque Wrenches', data.equipment.torqueWrenches], ['HVLS Crew Size (FTE)', data.equipment.crewSize]]);
+  field('Max Fans Installed Per Day', data.equipment.maxFansPerDay);
+  field('Travel / Service Coverage', data.equipment.travelCoverage);
+
+  sectionTitle('REFERENCES');
+  data.references.forEach((r, i) => {
+    field('Reference ' + (i+1), (r.company || '—') + '  |  ' + (r.contact || '—') + '  |  ' + (r.phone || '—') + '  |  ' + (r.email || '—') + '\n' + (r.project || '') + (r.year ? ' (' + r.year + ')' : ''));
+  });
+  field('Consent to Contact References', data.referenceConsent);
+
+  sectionTitle('PROGRAM FIT');
+  field('Target Tier', data.programFit.targetTier);
+  field('Facility Focus', data.programFit.facilityFocus);
+
+  sectionTitle('ATTESTATION');
+  field('48-Hour Quote Response Commitment', data.attestation.responseCommitment ? 'Acknowledged' : 'Not acknowledged');
+  field('Accuracy / Verification / Training Consent', data.attestation.verificationConsent ? 'Acknowledged' : 'Not acknowledged');
+  fieldRow([['Applicant', data.attestation.applicantName], ['Date', data.attestation.date]]);
+
+  // Footer on every page
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let i = 1; i <= pageCount; i++){
+    doc.setPage(i);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...SLATE);
+    doc.text('MacroAir Technologies, Inc.  ·  866.668.3247  ·  macroairfans.com', marginX, pageH - 24);
+    doc.text('Page ' + i + ' of ' + pageCount, pageW - marginX, pageH - 24, { align:'right' });
+  }
+
+  return doc;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SUBMIT FLOW
+═════════════════════════════════════════════════════════════════ */
+const submitBtn = document.getElementById('submit-btn');
+let lastPdfDoc = null;
+let lastCompanySlug = 'installer-application';
+
+function downloadPdf(){
+  if(!lastPdfDoc) return;
+  lastPdfDoc.save('macroair-installer-application-' + lastCompanySlug + '.pdf');
+}
+document.getElementById('modal-download').addEventListener('click', downloadPdf);
+
+submitBtn.addEventListener('click', async () => {
+  const bad = validate();
+  if(bad){
+    showToast('Please complete the highlighted fields.', 'error');
+    bad.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  errorBanner.classList.remove('show');
+
+  submitBtn.disabled = true;
+  const origLabel = submitBtn.textContent;
+  submitBtn.textContent = 'Generating PDF…';
+
+  const data = collectFormData();
+  const refNum = genRefNum();
+  lastCompanySlug = (data.company.legalName || 'installer-application').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+
+  let pdfBase64 = '';
+  try{
+    const doc = buildPdf(data, refNum);
+    lastPdfDoc = doc;
+    pdfBase64 = doc.output('datauristring').split(',')[1];
+  }catch(err){
+    console.error('PDF generation failed', err);
+    showToast('PDF generation failed. Please try again.', 'error');
+    submitBtn.disabled = false;
+    submitBtn.textContent = origLabel;
+    return;
+  }
+
+  const payload = {
+    refNum,
+    submittedAt: new Date().toISOString(),
+    applicantName: data.company.legalName || 'Applicant',
+    signerEmail: data.contact.email,
+    signerName: data.contact.name,
+    signerTitle: data.contact.title,
+    form: data,
+    pdfBase64,
+    source: 'installer-application'
+  };
+
+  submitBtn.textContent = 'Submitting…';
+  try{
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json().catch(() => ({}));
+    if(!(res.ok && result.success !== false)) throw new Error(result.error ? JSON.stringify(result.error) : 'worker ' + res.status);
+  }catch(err){
+    console.warn('Worker submit failed:', err);
+    showToast('Sent — but the email service responded slowly. We saved your submission; download your PDF as a backup.', 'error');
+    // continue to success — the PDF is generated and downloadable
+  }
+
+  document.getElementById('modal-ref').textContent = 'Reference: ' + refNum;
+  document.getElementById('success-modal').classList.add('open');
+  submitBtn.disabled = false;
+  submitBtn.textContent = origLabel;
+  postHeight();
+
+  // auto-download a copy for the applicant
+  try{ buildPdf(data, refNum).save('macroair-installer-application-' + lastCompanySlug + '.pdf'); }catch(e){}
+});
+
+/* ════════════════════════════════════════════════════════════════
+   IFRAME AUTO-RESIZE
+   Lets an embedding page (macroairfans.com) size the iframe to content.
+═════════════════════════════════════════════════════════════════ */
+function postHeight(){
+  if(window.parent === window) return;
+  const height = document.documentElement.scrollHeight;
+  window.parent.postMessage({ type: 'macroair-iframe-resize', height }, '*');
+}
+window.addEventListener('load', postHeight);
+window.addEventListener('resize', postHeight);
+document.getElementById('installer-form').addEventListener('input', postHeight);
+document.getElementById('installer-form').addEventListener('change', postHeight);
+new ResizeObserver(postHeight).observe(document.body);
+</script>
+
+</body>
+</html>
