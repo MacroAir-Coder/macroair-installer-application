@@ -321,6 +321,7 @@ html.light .q-label .req{color:#dc4b4b}
 .modal-backdrop.open{display:flex}
 .modal-card{background:var(--card-solid);border:1px solid var(--border-strong);border-radius:var(--radius-xl);max-width:480px;width:100%;padding:36px 32px;text-align:center;box-shadow:var(--shadow-lg)}
 .modal-card .check{width:64px;height:64px;border-radius:50%;background:rgba(15,186,142,.15);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 18px}
+.modal-card .check.err{background:rgba(224,84,84,.15);color:var(--danger)}
 .modal-card h3{font-size:22px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em}
 .modal-card p{color:var(--text-2);font-size:13.5px;margin-bottom:22px;line-height:1.55}
 .modal-card .ref{font-family:var(--mono);font-size:12px;color:var(--text-muted);background:var(--surface-2);padding:8px 14px;border-radius:var(--radius-sm);display:inline-block;margin-bottom:20px;letter-spacing:.04em}
@@ -798,8 +799,8 @@ html.light .q-label .req{color:#dc4b4b}
       </section>
 
       <!-- 10 :: Attestation -->
-      <section class="form-section" id="sec-10" data-label="Attestation">
-        <div class="section-label">10. Attestation</div>
+      <section class="form-section" id="sec-10" data-label="Acknowledgment &amp; Signature">
+        <div class="section-label">10. Acknowledgment &amp; Signature</div>
         <div class="glass-card">
           <div class="checkbox-row" id="q35_row">
             <input type="checkbox" id="q35" required>
@@ -855,15 +856,28 @@ html.light .q-label .req{color:#dc4b4b}
 
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
-<div class="modal-backdrop" id="success-modal">
+<div class="modal-backdrop" id="status-modal">
   <div class="modal-card">
-    <div class="check">✓</div>
-    <h3>Application submitted</h3>
-    <p>Thanks — your application has been sent to MacroAir's Certified Installer Program team. A confirmation with your PDF copy has been sent to your email. We'll follow up within a few business days.</p>
-    <div class="ref" id="modal-ref"></div>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" id="modal-download">Download PDF copy</button>
-      <button type="button" class="btn btn-primary" onclick="document.getElementById('success-modal').classList.remove('open')">Done</button>
+    <div id="modal-success">
+      <div class="check">✓</div>
+      <h3>Application submitted</h3>
+      <p>Thanks — your application has been sent to MacroAir's Certified Installer Program team. A confirmation with your PDF copy has been sent to your email. We'll follow up within a few business days.</p>
+      <div class="ref" id="modal-ref"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="modal-download">Download PDF copy</button>
+        <button type="button" class="btn btn-primary" id="modal-done">Done</button>
+      </div>
+    </div>
+    <div id="modal-error" style="display:none">
+      <div class="check err">!</div>
+      <h3>Submission didn't go through</h3>
+      <p id="modal-error-detail">We couldn't reach MacroAir's server just now. Your responses haven't been lost.</p>
+      <div class="ref" id="modal-ref-err"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="modal-retry">Try again</button>
+        <button type="button" class="btn btn-ghost" id="modal-download-err">Download PDF copy</button>
+        <a class="btn btn-ghost" id="modal-mailto" href="#">Email it to us</a>
+      </div>
     </div>
   </div>
 </div>
@@ -873,7 +887,7 @@ html.light .q-label .req{color:#dc4b4b}
    CONFIG
 ═════════════════════════════════════════════════════════════════ */
 // Replace with your deployed Cloudflare Worker URL once live.
-const WORKER_URL = 'installer-application.marketing-33d.workers.dev';
+const WORKER_URL = 'https://installer-application.tford-2c1.workers.dev';
 const LOGO_DATA_URI = document.querySelector('.logo-img').src;
 
 /* ════════════════════════════════════════════════════════════════
@@ -1307,7 +1321,7 @@ function buildPdf(data, refNum){
   field('Target Tier', data.programFit.targetTier);
   field('Facility Focus', data.programFit.facilityFocus);
 
-  sectionTitle('ATTESTATION');
+  sectionTitle('ACKNOWLEDGMENT & SIGNATURE');
   field('48-Hour Quote Response Commitment', data.attestation.responseCommitment ? 'Acknowledged' : 'Not acknowledged');
   field('Accuracy / Verification / Training Consent', data.attestation.verificationConsent ? 'Acknowledged' : 'Not acknowledged');
   fieldRow([['Applicant', data.attestation.applicantName], ['Date', data.attestation.date]]);
@@ -1329,15 +1343,95 @@ function buildPdf(data, refNum){
 /* ════════════════════════════════════════════════════════════════
    SUBMIT FLOW
 ═════════════════════════════════════════════════════════════════ */
+const SUBMIT_LABEL = 'Submit Application →';
 const submitBtn = document.getElementById('submit-btn');
+const statusModal = document.getElementById('status-modal');
+const modalSuccess = document.getElementById('modal-success');
+const modalError = document.getElementById('modal-error');
+
 let lastPdfDoc = null;
+let lastPdfBase64 = '';
+let lastData = null;
+let lastRefNum = '';
 let lastCompanySlug = 'installer-application';
 
 function downloadPdf(){
   if(!lastPdfDoc) return;
   lastPdfDoc.save('macroair-installer-application-' + lastCompanySlug + '.pdf');
 }
+
+function showStatus(kind){
+  modalSuccess.style.display = kind === 'success' ? '' : 'none';
+  modalError.style.display   = kind === 'error'   ? '' : 'none';
+  statusModal.classList.add('open');
+  postHeight();
+}
+
+function setupMailto(){
+  if(!lastData) return;
+  const c = lastData.company || {}, ct = lastData.contact || {};
+  const subject = 'Certified Installer Application — ' + (c.legalName || 'Applicant') + ' (' + lastRefNum + ')';
+  const body = "Hi MacroAir team,\n\nMy online submission didn't go through, so I'm sending my Certified Installer Program application by email instead. My PDF copy is attached (downloaded from the form).\n\nCompany: " + (c.legalName || '') + "\nContact: " + (ct.name || '') + "\nReference: " + lastRefNum + "\n\nThanks,\n" + ((lastData.attestation || {}).applicantName || ct.name || '');
+  document.getElementById('modal-mailto').href = 'mailto:jpennington@macroairfans.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
+
+// Wire modal buttons
 document.getElementById('modal-download').addEventListener('click', downloadPdf);
+document.getElementById('modal-download-err').addEventListener('click', downloadPdf);
+document.getElementById('modal-done').addEventListener('click', () => statusModal.classList.remove('open'));
+document.getElementById('modal-retry').addEventListener('click', () => { statusModal.classList.remove('open'); sendToWorker(); });
+
+// POST the already-built PDF + data to the Worker. Reused by submit + retry.
+async function sendToWorker(){
+  if(!lastData || !lastPdfBase64) return;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting…';
+
+  const payload = {
+    refNum: lastRefNum,
+    submittedAt: new Date().toISOString(),
+    applicantName: lastData.company.legalName || 'Applicant',
+    signerEmail: lastData.contact.email,
+    signerName: lastData.contact.name,
+    signerTitle: lastData.contact.title,
+    form: lastData,
+    pdfBase64: lastPdfBase64,
+    source: 'installer-application'
+  };
+
+  let ok = false, detail = '';
+  try{
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json().catch(() => ({}));
+    ok = res.ok && result.success !== false;
+    if(!ok){
+      detail = "The email service reported a problem" + (res.status ? " (status " + res.status + ")" : "") +
+               ". Your application wasn't delivered — retry below, or download your PDF and email it to us directly.";
+    }
+  }catch(err){
+    console.warn('Worker submit failed:', err);
+    ok = false;
+    detail = "We couldn't reach MacroAir's server. Your responses haven't been lost — retry, or download your PDF and email it to us directly.";
+  }
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = SUBMIT_LABEL;
+
+  if(ok){
+    document.getElementById('modal-ref').textContent = 'Reference: ' + lastRefNum;
+    showStatus('success');
+    try{ downloadPdf(); }catch(e){}   // hand the applicant their copy
+  }else{
+    document.getElementById('modal-error-detail').textContent = detail;
+    document.getElementById('modal-ref-err').textContent = 'Reference: ' + lastRefNum;
+    setupMailto();
+    showStatus('error');
+  }
+}
 
 submitBtn.addEventListener('click', async () => {
   const bad = validate();
@@ -1349,61 +1443,24 @@ submitBtn.addEventListener('click', async () => {
   errorBanner.classList.remove('show');
 
   submitBtn.disabled = true;
-  const origLabel = submitBtn.textContent;
   submitBtn.textContent = 'Generating PDF…';
 
-  const data = collectFormData();
-  const refNum = genRefNum();
-  lastCompanySlug = (data.company.legalName || 'installer-application').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  lastData = collectFormData();
+  lastRefNum = genRefNum();
+  lastCompanySlug = (lastData.company.legalName || 'installer-application').toLowerCase().replace(/[^a-z0-9]+/g,'-');
 
-  let pdfBase64 = '';
   try{
-    const doc = buildPdf(data, refNum);
-    lastPdfDoc = doc;
-    pdfBase64 = doc.output('datauristring').split(',')[1];
+    lastPdfDoc = buildPdf(lastData, lastRefNum);
+    lastPdfBase64 = lastPdfDoc.output('datauristring').split(',')[1];
   }catch(err){
     console.error('PDF generation failed', err);
     showToast('PDF generation failed. Please try again.', 'error');
     submitBtn.disabled = false;
-    submitBtn.textContent = origLabel;
+    submitBtn.textContent = SUBMIT_LABEL;
     return;
   }
 
-  const payload = {
-    refNum,
-    submittedAt: new Date().toISOString(),
-    applicantName: data.company.legalName || 'Applicant',
-    signerEmail: data.contact.email,
-    signerName: data.contact.name,
-    signerTitle: data.contact.title,
-    form: data,
-    pdfBase64,
-    source: 'installer-application'
-  };
-
-  submitBtn.textContent = 'Submitting…';
-  try{
-    const res = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const result = await res.json().catch(() => ({}));
-    if(!(res.ok && result.success !== false)) throw new Error(result.error ? JSON.stringify(result.error) : 'worker ' + res.status);
-  }catch(err){
-    console.warn('Worker submit failed:', err);
-    showToast('Sent — but the email service responded slowly. We saved your submission; download your PDF as a backup.', 'error');
-    // continue to success — the PDF is generated and downloadable
-  }
-
-  document.getElementById('modal-ref').textContent = 'Reference: ' + refNum;
-  document.getElementById('success-modal').classList.add('open');
-  submitBtn.disabled = false;
-  submitBtn.textContent = origLabel;
-  postHeight();
-
-  // auto-download a copy for the applicant
-  try{ buildPdf(data, refNum).save('macroair-installer-application-' + lastCompanySlug + '.pdf'); }catch(e){}
+  await sendToWorker();
 });
 
 /* ════════════════════════════════════════════════════════════════
