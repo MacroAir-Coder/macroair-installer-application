@@ -180,13 +180,6 @@ html.light .q-label .req{color:#dc4b4b}
 .q-hint a{color:var(--accent)}
 .field-note{font-size:11.5px;color:var(--text-muted);margin:0 0 5px}
 
-.key-flag{
-  display:inline-flex;align-items:center;gap:4px;
-  font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--accent);background:var(--accent-dim);border:1px solid var(--border-accent);
-  padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;white-space:nowrap;
-}
-
 .field-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}
 .field-row:last-child{margin-bottom:0}
 .field-row > div{flex:1 1 200px;min-width:0}
@@ -358,7 +351,7 @@ html.light .q-label .req{color:#dc4b4b}
   </div>
 
   <div class="info-note">
-    <b>Before you start:</b> Have your license numbers, insurance carrier and coverage amounts, most recent TRIR (Total Recordable Incident Rate) and EMR (Experience Modification Rate) figures, and three professional references on hand. Fields marked <span style="color:#ef6b6b;font-weight:700">*</span> are required to submit. A few questions carry extra weight in our review — those are flagged <span class="key-flag">Key criterion</span>.
+    <b>Before you start:</b> Have your license numbers, insurance carrier and coverage amounts, most recent TRIR (Total Recordable Incident Rate) and EMR (Experience Modification Rate) figures, and two professional references on hand. Fields marked <span style="color:#ef6b6b;font-weight:700">*</span> are required to submit.
   </div>
 
   <form id="installer-form" autocomplete="on" onsubmit="event.preventDefault();return false;">
@@ -409,7 +402,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label" for="q4">What is your HVLS experience?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label" for="q4">What is your HVLS experience?<span class="req">*</span></label>
             <p class="q-hint">Describe your background specifically with high-volume, low-speed fans — brands installed, approximate volume, facility types, and years of experience. General ceiling fan or HVAC experience alone won't answer this — be specific.</p>
             <textarea class="form-textarea" id="q4" required rows="4"></textarea>
           </div>
@@ -421,7 +414,7 @@ html.light .q-label .req{color:#dc4b4b}
         <div class="section-label">2. Licensing</div>
         <div class="glass-card">
           <div class="q">
-            <label class="q-label">Active Electrical Contractor license(s)?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Active Electrical Contractor license(s)?<span class="req">*</span></label>
             <p class="q-hint">Required in every state where your crews perform electrical work; MacroAir verifies independently.</p>
             <div class="yesno">
               <label><input type="radio" name="q5" value="Yes" required> Yes</label>
@@ -442,7 +435,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label">Is your company in good standing with all licensing boards? Has any license ever been suspended or revoked?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Is your company in good standing with all licensing boards? Has any license ever been suspended or revoked?<span class="req">*</span></label>
             <div class="field-row">
               <div>
                 <p class="field-note">Currently in good standing?</p>
@@ -461,15 +454,6 @@ html.light .q-label .req{color:#dc4b4b}
             </div>
             <textarea class="form-textarea" id="q7_explain" rows="2" style="margin-top:10px" placeholder="If yes to either, explain"></textarea>
           </div>
-
-          <div class="q">
-            <label class="q-label">Do you conduct criminal background checks on all field employees before hire?<span class="req">*</span></label>
-            <p class="q-hint">Installers access secured industrial facilities as part of this program.</p>
-            <div class="yesno">
-              <label><input type="radio" name="q8" value="Yes" required> Yes</label>
-              <label><input type="radio" name="q8" value="No" required> No</label>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -478,7 +462,7 @@ html.light .q-label .req{color:#dc4b4b}
         <div class="section-label">3. Insurance &amp; Bonding</div>
         <div class="glass-card">
           <div class="q">
-            <label class="q-label">General liability insurance — carrier and coverage amount<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">General liability insurance — carrier and coverage amount<span class="req">*</span></label>
             <p class="q-hint">MacroAir's minimum is <b>$2,000,000</b> in general liability coverage.</p>
             <div class="field-row">
               <div><input class="form-input" type="text" id="q9_carrier" required placeholder="Carrier name"></div>
@@ -493,7 +477,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label">Workers' compensation insurance<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Workers' compensation insurance<span class="req">*</span></label>
             <p class="q-hint">Required, no exceptions.</p>
             <div class="yesno">
               <label><input type="radio" name="q10" value="Yes" required> Yes, we carry it</label>
@@ -503,7 +487,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label">Are you bonded? Experience Modification Rate (EMR), most recent year<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Are you bonded? Experience Modification Rate (EMR), most recent year<span class="req">*</span></label>
             <p class="q-hint">EMR of 1.0 or lower is required for Certified status; above 1.25 needs an explanation.</p>
             <div class="field-row">
               <div>
@@ -517,7 +501,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label">Can you provide a Certificate of Insurance naming MacroAir as additionally insured within 5 business days of request?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Can you provide a Certificate of Insurance naming MacroAir as additionally insured within 5 business days of request?<span class="req">*</span></label>
             <div class="yesno">
               <label><input type="radio" name="q12" value="Yes" required> Yes</label>
               <label><input type="radio" name="q12" value="No" required> No</label>
@@ -531,7 +515,7 @@ html.light .q-label .req{color:#dc4b4b}
         <div class="section-label">4. Mechanical Experience</div>
         <div class="glass-card">
           <div class="q">
-            <label class="q-label">Years in commercial/industrial installation, and years specifically installing HVLS or large ceiling fans<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Years in commercial/industrial installation, and years specifically installing HVLS or large ceiling fans<span class="req">*</span></label>
             <div class="field-row">
               <div><input class="form-input" type="number" id="q13_general" required placeholder="Years — commercial/industrial (general)"></div>
               <div><input class="form-input" type="number" id="q13_hvls" required placeholder="Years — HVLS / large fans specifically"></div>
@@ -539,7 +523,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label">Approximate number of HVLS fans installed to date, all brands combined<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Approximate number of HVLS fans installed to date, all brands combined<span class="req">*</span></label>
             <select class="form-select" id="q14" required>
               <option value="">Select a range…</option>
               <option>0</option><option>1–10</option><option>11–50</option><option>51–200</option><option>200+</option>
@@ -556,7 +540,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label">Experience mounting equipment using beam clamps on structural steel (I-beam or H-beam)?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Experience mounting equipment using beam clamps on structural steel (I-beam or H-beam)?<span class="req">*</span></label>
             <p class="q-hint">All MacroAir fans mount via beam clamp to structural steel — this is a required capability.</p>
             <div class="yesno">
               <label><input type="radio" name="q16" value="Yes" required> Yes</label>
@@ -571,12 +555,6 @@ html.light .q-label .req{color:#dc4b4b}
               <option>1</option><option>2–5</option><option>6–20</option><option>21–50</option><option>51+</option>
             </select>
           </div>
-
-          <div class="q">
-            <label class="q-label" for="q18">Describe your most complex HVLS installation — what made it challenging and exactly how did you resolve it?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
-            <p class="q-hint">Be specific and operational — this tells us more about judgment and safety awareness than any other question. Generic answers won't stand out.</p>
-            <textarea class="form-textarea" id="q18" required rows="4"></textarea>
-          </div>
         </div>
       </section>
 
@@ -585,7 +563,7 @@ html.light .q-label .req{color:#dc4b4b}
         <div class="section-label">5. Safety Record</div>
         <div class="glass-card">
           <div class="q">
-            <label class="q-label">TRIR (Total Recordable Incident Rate) for the past 3 years<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">TRIR (Total Recordable Incident Rate) for the past 3 years<span class="req">*</span></label>
             <div class="field-row">
               <div><input class="form-input" type="text" id="q19_y1" required placeholder="Most recent year"></div>
               <div><input class="form-input" type="text" id="q19_y2" required placeholder="Year 2"></div>
@@ -608,7 +586,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label">Written Lockout/Tagout (LOTO) procedures per OSHA 1910.147? All field employees trained and documented?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Written Lockout/Tagout (LOTO) procedures per OSHA 1910.147? All field employees trained and documented?<span class="req">*</span></label>
             <div class="field-row">
               <div>
                 <p class="field-note">Written LOTO procedures</p>
@@ -622,7 +600,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label">Written Fall Protection Program per OSHA 1926.502? Aerial lift operators hold current certifications?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Written Fall Protection Program per OSHA 1926.502? Aerial lift operators hold current certifications?<span class="req">*</span></label>
             <p class="q-hint">HVLS installs typically require lift work at 20–60 ft.</p>
             <div class="field-row">
               <div>
@@ -663,7 +641,7 @@ html.light .q-label .req{color:#dc4b4b}
           </div>
 
           <div class="q">
-            <label class="q-label" for="q25">Walk through your commissioning sequence, from arriving on-site to applying first full power to a new MacroAir fan<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label" for="q25">Walk through your commissioning sequence, from arriving on-site to applying first full power to a new MacroAir fan<span class="req">*</span></label>
             <p class="q-hint">Be specific and sequential. Strong answers cover: pre-inspection, structural verification, lockout/tagout, wiring, torque verification, blade clearance check, low-speed spin test, escalation path, and documentation.</p>
             <textarea class="form-textarea" id="q25" required rows="5"></textarea>
           </div>
@@ -675,7 +653,7 @@ html.light .q-label .req{color:#dc4b4b}
         <div class="section-label">7. Equipment &amp; Capacity</div>
         <div class="glass-card">
           <div class="q">
-            <label class="q-label">Aerial work platforms — own, rent, or both? Maximum working height? Operators certified?<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">Aerial work platforms — own, rent, or both? Maximum working height? Operators certified?<span class="req">*</span></label>
             <div class="field-row">
               <div>
                 <select class="form-select" id="q26_own" required>
@@ -714,7 +692,7 @@ html.light .q-label .req{color:#dc4b4b}
       <!-- 8 :: References -->
       <section class="form-section" id="sec-8" data-label="References">
         <div class="section-label">8. References</div>
-        <div class="section-sub">Commercial or industrial HVLS projects are preferred. MacroAir contacts all three references directly.</div>
+        <div class="section-sub">Commercial or industrial HVLS projects are preferred. MacroAir contacts both references directly.</div>
         <div class="glass-card">
           <div class="ref-block">
             <h3>Reference 1</h3>
@@ -748,24 +726,8 @@ html.light .q-label .req{color:#dc4b4b}
             </div>
           </div>
 
-          <div class="ref-block">
-            <h3>Reference 3</h3>
-            <div class="field-row">
-              <div><input class="form-input" type="text" id="q31_company" required placeholder="Client company"></div>
-              <div><input class="form-input" type="text" id="q31_contact" required placeholder="Contact name &amp; title"></div>
-            </div>
-            <div class="field-row">
-              <div><input class="form-input" type="tel" id="q31_phone" required placeholder="Phone"></div>
-              <div><input class="form-input" type="email" id="q31_email" required placeholder="Email"></div>
-            </div>
-            <div class="field-row">
-              <div style="flex:2 1 300px"><input class="form-input" type="text" id="q31_project" required placeholder="Project description — facility type, # of fans, scope"></div>
-              <div><input class="form-input" type="text" id="q31_year" required placeholder="Year"></div>
-            </div>
-          </div>
-
           <div class="q" style="border-bottom:none;padding-bottom:0;margin-bottom:0">
-            <label class="q-label">I consent to MacroAir contacting all three references and independently verifying project details.<span class="req">*</span><span class="key-flag">Key criterion</span></label>
+            <label class="q-label">I consent to MacroAir contacting both references and independently verifying project details.<span class="req">*</span></label>
             <div class="yesno">
               <label><input type="radio" name="q32" value="Yes" required> Yes, I consent</label>
               <label><input type="radio" name="q32" value="No" required> No</label>
@@ -916,6 +878,25 @@ document.getElementById('copy-year').textContent = new Date().getFullYear();
 function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
 function radioVal(name){ const el = document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : ''; }
 function checkVal(id){ const el = document.getElementById(id); return !!(el && el.checked); }
+
+/* ════════════════════════════════════════════════════════════════
+   NUMERIC-ONLY FIELDS — restrict keystrokes to digits (and one
+   decimal point where noted) for fields that should only ever
+   contain a number: phone numbers, year, TRIR rates.
+═════════════════════════════════════════════════════════════════ */
+function restrictToNumeric(id, allowDecimal){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.setAttribute('inputmode', allowDecimal ? 'decimal' : 'numeric');
+  el.addEventListener('input', () => {
+    const cleaned = allowDecimal
+      ? el.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
+      : el.value.replace(/\D/g, '');
+    if(cleaned !== el.value) el.value = cleaned;
+  });
+}
+['q2_year', 'q3_phone', 'q29_phone', 'q30_phone', 'q29_year', 'q30_year'].forEach(id => restrictToNumeric(id, false));
+['q19_y1', 'q19_y2', 'q19_y3'].forEach(id => restrictToNumeric(id, true));
 
 /* ════════════════════════════════════════════════════════════════
    SUMMARY PANEL — section list, progress, live meta, scroll-spy
@@ -1102,8 +1083,7 @@ function collectFormData(){
       hvac: { has: radioVal('q6'), detail: val('q6_detail') },
       goodStanding: radioVal('q7_standing'),
       pastSuspension: radioVal('q7_past'),
-      suspensionExplain: val('q7_explain'),
-      backgroundChecks: radioVal('q8')
+      suspensionExplain: val('q7_explain')
     },
     insurance: {
       glCarrier: val('q9_carrier'),
@@ -1120,8 +1100,7 @@ function collectFormData(){
       fansInstalledRange: val('q14'),
       vfdFamiliar: radioVal('q15'),
       beamClampExperience: radioVal('q16'),
-      largestProjectRange: val('q17'),
-      complexInstall: val('q18')
+      largestProjectRange: val('q17')
     },
     safety: {
       trirY1: val('q19_y1'), trirY2: val('q19_y2'), trirY3: val('q19_y3'),
@@ -1148,8 +1127,7 @@ function collectFormData(){
     },
     references: [
       { company: val('q29_company'), contact: val('q29_contact'), phone: val('q29_phone'), email: val('q29_email'), project: val('q29_project'), year: val('q29_year') },
-      { company: val('q30_company'), contact: val('q30_contact'), phone: val('q30_phone'), email: val('q30_email'), project: val('q30_project'), year: val('q30_year') },
-      { company: val('q31_company'), contact: val('q31_contact'), phone: val('q31_phone'), email: val('q31_email'), project: val('q31_project'), year: val('q31_year') }
+      { company: val('q30_company'), contact: val('q30_contact'), phone: val('q30_phone'), email: val('q30_email'), project: val('q30_project'), year: val('q30_year') }
     ],
     referenceConsent: radioVal('q32'),
     programFit: {
@@ -1280,7 +1258,6 @@ function buildPdf(data, refNum){
   field('HVAC Contractor License', data.licensing.hvac.has + (data.licensing.hvac.detail ? ' — ' + data.licensing.hvac.detail : ''));
   fieldRow([['Good Standing', data.licensing.goodStanding], ['Past Suspension/Revocation', data.licensing.pastSuspension]]);
   if(data.licensing.suspensionExplain) field('Explanation', data.licensing.suspensionExplain);
-  field('Background Checks on Field Employees', data.licensing.backgroundChecks);
 
   sectionTitle('INSURANCE & BONDING');
   fieldRow([['General Liability Carrier', data.insurance.glCarrier], ['Coverage Amount', data.insurance.glAmount]]);
@@ -1292,7 +1269,6 @@ function buildPdf(data, refNum){
   fieldRow([['Years — General Commercial/Industrial', data.mechanical.yearsGeneral], ['Years — HVLS Specific', data.mechanical.yearsHvls]]);
   fieldRow([['HVLS Fans Installed To Date', data.mechanical.fansInstalledRange], ['Largest Single Project', data.mechanical.largestProjectRange]]);
   fieldRow([['VFD Familiarity', data.mechanical.vfdFamiliar], ['Beam Clamp / Structural Steel Experience', data.mechanical.beamClampExperience]]);
-  field('Most Complex Installation', data.mechanical.complexInstall);
 
   sectionTitle('SAFETY RECORD');
   field('TRIR (Total Recordable Incident Rate) — Past 3 Years', data.safety.trirY1 + ' / ' + data.safety.trirY2 + ' / ' + data.safety.trirY3);
